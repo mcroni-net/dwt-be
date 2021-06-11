@@ -1,7 +1,13 @@
 package it.drop.mcroni.dwt.service;
 
+import it.drop.mcroni.dwt.ParkRateLimiter;
 import it.drop.mcroni.dwt.ParkSlotManager;
 import it.drop.mcroni.dwt.data.ParkSlot;
+import it.drop.mcroni.dwt.exc.CarAlreadyPresentException;
+import it.drop.mcroni.dwt.exc.NoSlotAvailableException;
+import it.drop.mcroni.dwt.exc.RateLimitException;
+import it.drop.mcroni.dwt.exc.SlotAlreadyFreeException;
+import it.drop.mcroni.dwt.exc.SlotNotExistsException;
 import it.drop.mcroni.dwt.util.ConfigProperties;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,11 +48,22 @@ public class ParkController {
       return ResponseEntity
               .status(HttpStatus.CREATED)
               .body(resp);
+
+    } catch (NoSlotAvailableException ex) {
+      LOGGER.error("", ex);
+      return ResponseEntity
+              .status(HttpStatus.CONFLICT)
+              .body(ex.getMessage());
+    } catch (CarAlreadyPresentException ex) {
+      LOGGER.error("", ex);
+      return ResponseEntity
+              .status(HttpStatus.CONFLICT)
+              .body(ex.getMessage());
     } catch (Exception ex) {
       LOGGER.error("", ex);
       return ResponseEntity
-              .status(HttpStatus.FORBIDDEN)
-              .body(ex.getMessage());
+              .status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body("no more slots available");
     }
   }
 
@@ -60,7 +77,7 @@ public class ParkController {
     } catch (Exception ex) {
       LOGGER.error("", ex);
       return ResponseEntity
-              .status(HttpStatus.FORBIDDEN)
+              .status(HttpStatus.INTERNAL_SERVER_ERROR)
               .body(ex.getMessage());
     }
   }
@@ -72,32 +89,50 @@ public class ParkController {
       return ResponseEntity
               .status(HttpStatus.CREATED)
               .body(resp);
-    } catch (Exception ex) {
+    } catch (SlotNotExistsException ex) {
       LOGGER.error("", ex);
       return ResponseEntity
-              .status(HttpStatus.FORBIDDEN)
-              .body(ex.getMessage());
-    }
+              .status(HttpStatus.NOT_FOUND)
+              .body("slot not exists");
+    } catch (SlotAlreadyFreeException ex) {
+      LOGGER.error("", ex);
+      return ResponseEntity
+              .status(HttpStatus.PARTIAL_CONTENT)
+              .body("slot already freee");
+    } catch (Exception ex) {
+    LOGGER.error("", ex);
+    return ResponseEntity
+            .status(HttpStatus.INTERNAL_SERVER_ERROR)
+            .body(ex.getMessage());
+  }
   }
 
   @RequestMapping(value = "/freeSlot", method= RequestMethod.GET)
-  public List<String> slotInfo() {
+  public ResponseEntity slotInfo() {
     try {
-      return ParkSlotManager.getInstance().getParkFreeSlotList();
+      List<String> slotInfos = ParkSlotManager.getInstance().getParkFreeSlotList();
+      return ResponseEntity
+              .status(HttpStatus.CREATED)
+              .body(slotInfos);
     } catch (Exception ex) {
       LOGGER.error("", ex);
-      // TODO error response
-      return null;
+      return ResponseEntity
+              .status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body(ex.getMessage());
     }
   }
   @RequestMapping(value = "/carInfo", method= RequestMethod.GET)
-  public List<String> carInfo() {
+  public ResponseEntity carInfo() {
     try {
-      return ParkSlotManager.getInstance().getCarList();
+      List<String> carInfos = ParkSlotManager.getInstance().getCarList();
+      return ResponseEntity
+              .status(HttpStatus.CREATED)
+              .body(carInfos);
     } catch (Exception ex) {
       LOGGER.error("", ex);
-      // TODO error response
-      return null;
+      return ResponseEntity
+              .status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body(ex.getMessage());
     }
   }
 

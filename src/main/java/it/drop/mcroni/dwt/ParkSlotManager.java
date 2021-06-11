@@ -1,6 +1,10 @@
 package it.drop.mcroni.dwt;
 
 import it.drop.mcroni.dwt.data.ParkSlot;
+import it.drop.mcroni.dwt.exc.CarAlreadyPresentException;
+import it.drop.mcroni.dwt.exc.NoSlotAvailableException;
+import it.drop.mcroni.dwt.exc.SlotAlreadyFreeException;
+import it.drop.mcroni.dwt.exc.SlotNotExistsException;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -14,7 +18,6 @@ public class ParkSlotManager {
 
   private static ParkSlotManager instance;
 
-  // TODO come passare valore da properties
   private static int slotNumber;
   private static String slotLabel = "PS-";
 
@@ -66,9 +69,9 @@ public class ParkSlotManager {
     return cars.size()==slotNumber;
   }
 
-  public ParkSlot addCar(String carId) throws Exception {
+  public ParkSlot addCar(String carId) throws NoSlotAvailableException, CarAlreadyPresentException {
     if (cars.containsKey(carId))
-      throw new Exception("car with id '"+carId+"' is already present");
+      throw new CarAlreadyPresentException("car with id '"+carId+"' is already present");
     Iterator it = slots.entrySet().iterator();
     while (it.hasNext()) {
       Map.Entry<String, String> pair = (Map.Entry<String, String>)it.next();
@@ -78,16 +81,15 @@ public class ParkSlotManager {
         return new ParkSlot(carId, pair.getKey());
       }
     }
-    throw new Exception("no slot available");
+    throw new NoSlotAvailableException();
   }
 
-  public ParkSlot removeCar(String slotId) throws Exception {
-    // TODO custom exc to manage different error
+  public ParkSlot removeCar(String slotId) throws SlotNotExistsException, SlotAlreadyFreeException {
     if (!slots.containsKey(slotId))
-      throw new Exception("slot not exists");
+      throw new SlotNotExistsException();
     String carId = slots.get(slotId);
     if (carId==null)
-      throw new Exception("slot is already free");
+      throw new SlotAlreadyFreeException();
 
     slots.put(slotId, null);
     cars.remove(carId);
