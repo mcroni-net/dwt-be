@@ -39,23 +39,30 @@ public class ParkController {
   public void init() {
     LOGGER.info("init Park controller for app '"+prop.getAppName()+"'");
     ParkSlotManager.init(prop.getSlotNumber());
+    ParkRateLimiter.init(prop.getRateLimitNumer(), prop.getRateLimitSec());
   }
 
   @RequestMapping(value = "/parks/{licensePlate}", method= RequestMethod.POST)
   public ResponseEntity parks(@PathVariable("licensePlate") String licensePlate) {
     try {
+      ParkRateLimiter.getInstance().checkRateLimit();
       ParkSlot resp = ParkSlotManager.getInstance().addCar(licensePlate);
       return ResponseEntity
               .status(HttpStatus.CREATED)
               .body(resp);
 
+    } catch (RateLimitException ex) {
+      //LOGGER.error("", ex);
+      return ResponseEntity
+              .status(HttpStatus.TOO_MANY_REQUESTS)
+              .body(ex.getMessage());
     } catch (NoSlotAvailableException ex) {
-      LOGGER.error("", ex);
+      //LOGGER.error("", ex);
       return ResponseEntity
               .status(HttpStatus.CONFLICT)
               .body(ex.getMessage());
     } catch (CarAlreadyPresentException ex) {
-      LOGGER.error("", ex);
+      //LOGGER.error("", ex);
       return ResponseEntity
               .status(HttpStatus.CONFLICT)
               .body(ex.getMessage());
@@ -63,7 +70,7 @@ public class ParkController {
       LOGGER.error("", ex);
       return ResponseEntity
               .status(HttpStatus.INTERNAL_SERVER_ERROR)
-              .body("no more slots available");
+              .body(ex.getMessage());
     }
   }
 
@@ -90,21 +97,21 @@ public class ParkController {
               .status(HttpStatus.CREATED)
               .body(resp);
     } catch (SlotNotExistsException ex) {
-      LOGGER.error("", ex);
+      //LOGGER.error("", ex);
       return ResponseEntity
               .status(HttpStatus.NOT_FOUND)
               .body("slot not exists");
     } catch (SlotAlreadyFreeException ex) {
-      LOGGER.error("", ex);
+      //LOGGER.error("", ex);
       return ResponseEntity
               .status(HttpStatus.PARTIAL_CONTENT)
               .body("slot already freee");
     } catch (Exception ex) {
-    LOGGER.error("", ex);
-    return ResponseEntity
-            .status(HttpStatus.INTERNAL_SERVER_ERROR)
-            .body(ex.getMessage());
-  }
+      //LOGGER.error("", ex);
+      return ResponseEntity
+              .status(HttpStatus.INTERNAL_SERVER_ERROR)
+              .body(ex.getMessage());
+    }
   }
 
   @RequestMapping(value = "/freeSlot", method= RequestMethod.GET)

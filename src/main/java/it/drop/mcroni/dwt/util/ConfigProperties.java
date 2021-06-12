@@ -9,6 +9,24 @@ public class ConfigProperties {
 
   private String appName;
   private int slotNumber;
+  private int rateLimitNumer;
+  private int rateLimitSec;
+
+  public int getRateLimitNumer() {
+    return rateLimitNumer;
+  }
+
+  public void setRateLimitNumer(int rateLimitNumer) {
+    this.rateLimitNumer = rateLimitNumer;
+  }
+
+  public int getRateLimitSec() {
+    return rateLimitSec;
+  }
+
+  public void setRateLimitSec(int rateLimitSec) {
+    this.rateLimitSec = rateLimitSec;
+  }
 
   public String getAppName() {
     return appName;
